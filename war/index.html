@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<body onload="init()">
+
+<div id="gameboard">
+	<div id="scores"></div>
+	<div id="wrapper">
+		<div id="conf">
+			<table>	
+				<tr>
+					<td colspan="2" id="game-result">Welcome to Nibbles</td>
+				</tr>	
+				<tr>
+					<td>Number of players (1-4):</td>
+					<td><input id="n" type="number" value="2" min="1" max="4"></td>
+				</tr>	
+				<tr>
+					<td>Player names:</td>
+					<td><input id="names" type="text" value="Worm1, Worm2"></td>
+				</tr>	
+				<tr>
+					<td>Speed (1-100):</td>
+					<td><input id="speed" type="number" value="10" min="1" max="1000"></td>
+				</tr>	
+				<tr>
+					<td>Lives (1-60):</td>
+					<td><input id="lives" type="number" value="20" min="1" max="1000"></td>
+				</tr>	
+				<tr>
+					<td>Size (X, Y):</td>
+					<td><input id="sizex" type="number" value="80" min="1" max="1000"><input id="sizey" type="number" value="50" min="1" max="1000"></td>
+				</tr>	
+				<tr>
+					<td>Pixel dimension (X, Y):</td>
+					<td><input id="pixx" type="number" value="12" min="1" max="1000"><input id="pixy" type="number" value="12" min="1" max="1000"></td>
+				</tr>	
+				<tr class="desc">
+					<td colspan="2">Press ENTER to Start/Restart, ESC to Pause/Resume</td>
+				</tr>	
+			</table>
+		</div>
+		<table id="playground" border="0" cellpadding="0" cellspacing="0">
+		</table>
+	</div>
+</div>
+
+</body>
+<style id="playground-style">
+body {
+	font: normal 13px/1.4 Arial, Helvetica, sans-serif;
+}
+
+#playground {
+	border: 1px solid #ccc;
+	position: absolute;
+}
+
+#wrapper {
+	position: relative;
+}
+
+#conf {
+	position: absolute;
+	background: white;
+	z-index: 1000;
+	left: 10px;
+	top: 10px;
+	transition: height .2s;
+	-webkit-transition: height .2s;
+	-moz-transition: height .2s;
+	overflow: hidden;
+}
+
+#conf table {
+	padding: 10px;
+	border: 3px solid orange;
+}
+
+#conf .desc {
+	font-weight: bold;
+	color: #999;
+	line-height: 40px; 
+}
+
+#conf #game-result {
+	color: #AC399A;
+	font-size: 20px;
+	padding: 15px 0;
+}
+
+#playground tr {
+	width: 100%;
+}
+
+#playground tr, #playground td {
+	border: none;
+	position: relative;
+}
+
+#playground .wall {
+	background: orange;
+}
+
+#playground .food {
+	background: #F9F9F9;
+	position: absolute;
+	top: 0;
+	left:0;
+}
+
+#playground .food.ge10 {
+	font-size: smaller;
+	letter-spacing: -1px;
+}
+
+#playground td.p1 {
+	background: red;
+}
+#playground td.p2 {
+	background: blue;
+}
+#playground td.p3 {
+	background: yellow;
+}
+#playground td.p4 {
+	background: green;
+}
+
+#p1Lives {
+	color: red;
+}
+#p2Lives {
+	color: blue;
+}
+#p3Lives {
+	color: yellow;
+}
+#p4Lives {
+	color: green;
+}
+
+.score {
+	display: inline-block;
+	height: 3em;
+}
+</style>
+
+<script>
+function init() {
+	if (localStorage && localStorage.conf) {
+		split = localStorage.conf.split('`');
+		document.getElementById('n').value = split[0];  
+		document.getElementById('names').value = split[1];  
+		document.getElementById('speed').value = split[2];  
+		document.getElementById('lives').value = split[3];  
+		document.getElementById('sizex').value = split[4];  
+		document.getElementById('sizey').value = split[5];  
+		document.getElementById('pixx').value = split[6];  
+		document.getElementById('pixy').value = split[7];  
+	}
+	
+	var playground;
+	
+	document.onkeyup = function(e) {
+		switch (e.which) {
+		case  13:
+			if (playground == null || (playground != null && playground.interval == null)) {
+				confWidth = document.getElementById('conf').offsetWidth + 'px';
+				confHeight = document.getElementById('conf').offsetHeight + 'px';
+				var conf = getConf();
+				document.getElementById('scores').innerHTML = '';
+				for (var i = 0; i < conf.n; i++) {
+					conf.names[i] = conf.names[i] || ('Player ' + i);
+					document.getElementById('scores').innerHTML += '<div class="score" style="width: ' + (100 / conf.n) + '%"><b>&nbsp;&nbsp;' + 
+						conf.names[i] + '</b> lives: <b id="p' + (i + 1) + 'Lives">' + 
+						conf.lives + '</b> score:<span id="p' + (i + 1) + 'Score">0</span></div>' 
+				}
+				playground = new Playground().init(conf, document.getElementById('playground'));
+				document.getElementById('scores').style.width = document.getElementById('playground').style.width;
+				
+				playground.gameOverCallback = function() {
+					document.getElementById('game-result').innerHTML = playground.gameOver;
+					document.getElementById('conf').show();
+				};
+				playground.livesCallback = function(n, v) {
+					document.getElementById('p' + n + 'Lives').innerHTML = v;
+				};
+				playground.scoreCallback = function(n, v) {
+					document.getElementById('p' + n + 'Score').innerHTML = v;
+				};
+				document.getElementById('conf').hide();
+				
+				if (localStorage) {
+					localStorage.conf = [document.getElementById('n').value, document.getElementById('names').value, 
+					                     document.getElementById('speed').value, document.getElementById('lives').value, 
+					                     document.getElementById('sizex').value, document.getElementById('sizey').value, 
+					                     document.getElementById('pixx').value, document.getElementById('pixy').value].join("`"); 
+				}
+				
+				playground.resume();
+			}
+			break;
+		case 27:
+			if (playground != null) {
+				if (playground.interval) {
+					playground.pause();
+					document.getElementById('conf').show();
+				} else {
+					if (!playground.gameOver) {
+						playground.resume();
+						document.getElementById('conf').hide();
+					}
+				}
+			}
+			break;
+		}
+	}
+	
+	var confHeight;
+	document.getElementById('conf').show = function() {
+		document.getElementById('conf').style.visibility = 'visible';
+		document.getElementById('conf').style.height = confHeight;		
+	}
+	document.getElementById('conf').hide = function() {
+		document.getElementById('conf').style.visibility = 'hidden';
+		document.getElementById('conf').style.height = 0;
+	}
+	
+	var getConf = function() {
+		return {
+			n:	parseInt(document.getElementById('n').value),
+			speed: parseInt(document.getElementById('speed').value),
+			lives: parseInt(document.getElementById('lives').value),
+			names: document.getElementById('names').value.split(/ *, */g),
+			size: {
+				x: parseInt(document.getElementById('sizex').value),
+				y: parseInt(document.getElementById('sizey').value)
+			},
+			pixel: {
+				x: parseInt(document.getElementById('pixx').value),
+				y: parseInt(document.getElementById('pixy').value)
+			}
+		}
+	};
+
+	var Playground = function() {
+		return {
+			matrix: [],
+			get: function(x, y) {
+				return this.matrix[x][y].value;
+			},
+			set: function(x, y, v) {
+				if (x == undefined) {
+					console.log(x, y);
+				}
+				this.matrix[x][y].value = v;
+				this.draw(x, y, v);
+			},
+			worms: [],
+			broadcast: function(message) {
+				this.pause();
+				this.gameOver = message;
+				this.gameOverCallback();
+			},
+			gameOver: false,
+			gameOverCallback: function() {},
+			livesCallback: function() {},
+			scoreCallback: function() {},
+			randomLoc: function() {
+				var x, y;
+				do {
+					x = 3 + parseInt(Math.random() * (this.matrix.length - 6));
+					y = 3 + parseInt(Math.random() * (this.matrix[0].length - 6));
+				} while(this.get(x,y) != null);
+				return {x: x, y:y};
+			},
+			randomDir: function() {
+				switch (parseInt(Math.random() * 4)) {
+				case 0: return 'l';
+				case 1: return 'u';
+				case 2: return 'r';
+				case 3: return 'd';
+				}
+			},
+			food: {
+				loc: {x: 1, y: 1}, 
+				food: 0, 
+				isEaten: true 
+			},
+			eat: function(food) {
+				food.isEaten = true; 
+				this.set(food.loc.x, food.loc.y, null);
+				return food.food;
+			},
+			tick: function() {
+				if (this.food.isEaten) {
+					this.food.isEaten = false;
+					this.food.food++;
+					var loc = this.randomLoc();
+					this.food.loc = loc;
+					this.set(loc.x, loc.y, this.food);
+				}
+				for (var i = 0; i < this.worms.length; i++) {
+					var worm = this.worms[i];
+					if (!worm.alive) {
+						this.die(worm);
+					} else {
+						worm.step();
+					}
+				}
+			},
+			die: function(worm) {
+				var n = this.worms.length;
+				/* if (punish && this.food.food > 1) {
+					this.food.food--;
+					this.draw(this.food.loc.x, this.food.loc.y, this.get(this.food.loc.x, this.food.loc.y));
+				} */
+				this.worms.splice(this.worms.indexOf(worm), 1);
+				if (worm.lives > 0) {
+					worm.lives--;
+					this.livesCallback(worm.number, worm.lives);
+					this.worms.push(worm.init());					
+				} else {						
+					if (n == 1) {
+						this.broadcast('Level: ' + this.food.food + ' Score: ' + worm.score);
+					} else if (this.worms.length == 1) {
+						this.broadcast(this.worms[0].name + ' is the Champion. Level: ' + 
+								this.food.food + " Score: " + this.worms[0].score);
+					}
+				}
+			},
+			init: function(config, playgroundElement) {		
+				playgroundElement.innerHTML = '';
+				for (var y = 0; y < config.size.y; y++) {
+					var tr = document.createElement('tr');
+					playgroundElement.appendChild(tr);
+					for (var x = 0; x < config.size.x; x++) {
+						if (!this.matrix[x]) {
+							this.matrix[x] = [];
+						}
+						var td = document.createElement('td');
+						tr.appendChild(td);
+						this.matrix[x][y] = {value: null, elem: td};
+					}
+				}
+
+				for (var i = 0; i < config.n; i++) {
+					var worm = new Worm(i + 1, config.names[i], config.lives, this).init(config.size);
+					var _this = this;
+					worm.scoreCallback = function(n, v) {
+						_this.scoreCallback(n, v);
+					}
+					this.worms.push(worm);
+				}
+				for (var i = 0; i < config.size.x; i++) {					
+					this.set(i, 0, this.wall);
+					this.set(i, config.size.y - 1, this.wall);
+				}
+				for (var i = 0; i < config.size.y; i++) {
+					this.set(0, i, this.wall);
+					this.set(config.size.x - 1, i, this.wall);
+				}
+				
+				playgroundElement.style.width = config.size.x * config.pixel.x + 'px';
+				playgroundElement.style.height = config.size.y * config.pixel.y + 'px';
+				playgroundElement.style.lineHeight = config.pixel.y + 'px';
+				var css = '#playground td {width:' + config.pixel.x + 'px;height:' + config.pixel.y + 'px;}',
+			    head = document.getElementsByTagName('head')[0],
+			    style = document.createElement('style');
+				style.type = 'text/css';
+				if (style.styleSheet){
+					style.styleSheet.cssText = css;
+				} else {
+					style.appendChild(document.createTextNode(css));
+				}
+				head.appendChild(style);
+				
+				this.speed = config.speed;
+				
+				this.tick();
+				var _this = this;
+								
+				document.onkeydown = function(e) {
+					if (_this.interval != null) {
+						for (var i = 0; i < _this.worms.length; i++) {
+							var worm = _this.worms[i];
+							code = e.which + worm.number * 1000;
+							var map = _this.keyMap[code];
+							if (map != null) {
+								if (worm.head.d != map[1]) worm.turn(map[0]);
+								e.preventDefault();
+							}
+						}
+					}
+				}		
+				
+				return this;
+			}, 
+			speed: 50,
+			keyMap: {
+				1037: ['l', 'r'], 1038: ['u', 'd'], 1039: ['r', 'l'], 1040: ['d', 'u'], 
+				2065: ['l', 'r'], 2087: ['u', 'd'], 2068: ['r', 'l'], 2083: ['d', 'u'], 
+				3071: ['l', 'r'], 3089: ['u', 'd'], 3074: ['r', 'l'], 3072: ['d', 'u'], 
+				4076: ['l', 'r'], 4080: ['u', 'd'], 4222: ['r', 'l'], 4186: ['d', 'u'] 
+			},
+			resume: function() {
+				var _this = this;
+				this.interval = setInterval(function() {_this.tick()}, 1000 / _this.speed);
+			},
+			pause: function() {
+				clearInterval(this.interval);
+				this.interval = null;
+			},
+			interval: null,
+			wall: {
+				isWall: true
+			},
+			draw: function(x, y, v) {
+				if (!v) {
+					this.matrix[x][y].elem.removeAttribute('class');
+					while (this.matrix[x][y].elem.hasChildNodes()) {
+						this.matrix[x][y].elem.removeChild(this.matrix[x][y].elem.lastChild);
+					}
+				} else if (v.number) {
+					this.matrix[x][y].elem.setAttribute('class', 'p' + v.number);
+				} else if (v.isWall) {
+					this.matrix[x][y].elem.setAttribute('class', 'wall');						
+				} else if (v.food != null) {
+					var foodEl = document.createElement('span');
+					foodEl.setAttribute('class', +v.food >= 10 ? 'food ge10' : 'food');
+					foodEl.innerHTML = v.food;
+					this.matrix[x][y].elem.appendChild(foodEl);
+				}
+			}
+		 }
+	};
+	
+	var Worm = function(n, name, lives, playground) {		
+		return {
+			number: n,
+			head: {},
+			tail: {},
+			turns: [],			
+			turn: function(d) {
+				if (this.turns.length === 0 || this.turns[this.turns.length - 1] !== d) {
+					this.turns.push(d);
+				}
+			},
+			init: function(size) {
+				if (this.head.x == null) {
+					switch (this.number) {
+					case 1: this.head = {x: parseInt(size.x / 4), y: parseInt(size.y / 2), d: 'r'};
+					break
+					case 2: this.head = {x: parseInt(3 * size.x / 4), y: parseInt(size.y / 2), d: 'l'};
+					break
+					case 3: this.head = {x: parseInt(size.x / 2), y: parseInt(size.y / 4), d: 'd'};
+					break
+					case 4: this.head = {x: parseInt(size.x / 2), y: parseInt(3 * size.y / 4), d: 'u'};
+					break
+					}
+				} else {
+					var loc = playground.randomLoc();
+					this.head = {x: loc.x, y: loc.y, d: playground.randomDir()};
+				}
+				playground.set(this.head.x, this.head.y, this);
+				this.tail = {next: this.head};
+				this.length = 3;
+				this.grow = 1;
+				this.alive = true;				
+				this.step();
+				this.step();
+				return this;
+			},
+			alive: true,
+			name: name,
+			grow: 1,
+			lives: lives,
+			score: 0,
+			length: 3,
+			step: function() {
+				var newHead;
+				switch(this.turns.pop() || this.head.d) {
+				case 'r': newHead = {x: this.head.x + 1, y: this.head.y, d: 'r'};
+				break;
+				case 'l': newHead = {x: this.head.x - 1, y: this.head.y, d: 'l'};
+				break;
+				case 'd': newHead = {x: this.head.x, y: this.head.y + 1, d: 'd'};
+				break;
+				case 'u': newHead = {x: this.head.x, y: this.head.y - 1, d: 'u'};
+				break;
+				}
+				this.head.next = newHead;
+				this.head = newHead;
+				this.eat(this.head.x, this.head.y);
+				if (this.alive) {
+					playground.set(this.head.x, this.head.y, this);
+					if (this.grow > 0) {
+						this.grow--;
+					} else {
+						if (this.tail.x != null) {
+							playground.set(this.tail.x, this.tail.y, null);
+						}
+						this.tail = this.tail.next;
+					}
+				}
+			},
+			eat: function(x, y) {
+				var v = playground.get(x, y);
+				if (!v) {
+				} else if (v.isWall || v.number) {
+					if (v.number) {
+						if (v.head.x == x && v.head.y == y) {
+							v.die();
+						} else {
+							if (v.alive) {
+								v.digest(this.length);
+							}
+						}
+					}
+					this.die();
+				} else if (v.food) {
+					var f = playground.eat(v)
+					this.digest(f);
+					this.length += f; 
+				} else if (v.life) {
+					this.lives += v.lives();
+				}
+			},
+			digest: function(v) {
+				this.grow += v;
+				this.score += v;
+				this.scoreCallback(this.number, this.score);
+			},
+			scoreCallback : function(){},
+			die: function() { 
+				this.alive = false;
+				this.score = Math.max(this.score - 10, 0);
+				this.scoreCallback(this.number, this.score);
+				while (this.tail != this.head) {
+					if (this.tail.x != null) {
+						playground.set(this.tail.x, this.tail.y, null);
+					}
+					this.tail = this.tail.next;
+				}
+				if (playground.get(this.head.x, this.head.y) === this) {
+					playground.set(this.head.x, this.head.y, null);
+				}
+			}
+		}
+	};
+}
+</script>
+</html>
+ 
