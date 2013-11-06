@@ -16,7 +16,11 @@
 				</tr>	
 				<tr>
 					<td>Player names:</td>
-					<td><input id="names" type="text" value="Worm1, Worm2"></td>
+					<td><input id="names" type="text" value="Player 1, Player 2"></td>
+				</tr>	
+				<tr>
+					<td>Player Colors:</td>
+					<td><input id="colors" type="text" size= "30" value="red, blue, yellow, green"></td>
 				</tr>	
 				<tr>
 					<td>Speed (1-100):</td>
@@ -33,6 +37,10 @@
 				<tr>
 					<td>Pixel dimension (X, Y):</td>
 					<td><input id="pixx" type="number" value="12" min="1" max="1000"><input id="pixy" type="number" value="12" min="1" max="1000"></td>
+				</tr>	
+				<tr>
+					<td>Playground colors: <div class="conf-sub">(playground, walls, food color, food background)</div></td>
+					<td><input id="playgroundColors" type="text" size= "30" value="white, orange, black, white"></td>
 				</tr>	
 				<tr class="desc">
 					<td colspan="2">Press ENTER to Start/Restart, ESC to Pause/Resume</td>
@@ -69,11 +77,15 @@ body {
 	-webkit-transition: height .2s;
 	-moz-transition: height .2s;
 	overflow: hidden;
+	box-shadow: 0px 0px 12px 6px orange;
 }
 
 #conf table {
-	padding: 10px;
-	border: 3px solid orange;
+	padding: 10px;	
+}
+
+#conf table td {
+	width: 160px;
 }
 
 #conf .desc {
@@ -88,6 +100,11 @@ body {
 	padding: 15px 0;
 }
 
+#conf .conf-sub {
+	font-size: smaller;
+	color: #333;
+	padding-left: 5px;
+}
 #playground tr {
 	width: 100%;
 }
@@ -97,12 +114,7 @@ body {
 	position: relative;
 }
 
-#playground .wall {
-	background: orange;
-}
-
 #playground .food {
-	background: #F9F9F9;
 	position: absolute;
 	top: 0;
 	left:0;
@@ -111,32 +123,6 @@ body {
 #playground .food.ge10 {
 	font-size: smaller;
 	letter-spacing: -1px;
-}
-
-#playground td.p1 {
-	background: red;
-}
-#playground td.p2 {
-	background: blue;
-}
-#playground td.p3 {
-	background: yellow;
-}
-#playground td.p4 {
-	background: green;
-}
-
-#p1Lives {
-	color: red;
-}
-#p2Lives {
-	color: blue;
-}
-#p3Lives {
-	color: yellow;
-}
-#p4Lives {
-	color: green;
 }
 
 .score {
@@ -149,14 +135,20 @@ body {
 function init() {
 	if (localStorage && localStorage.conf) {
 		split = localStorage.conf.split('`');
-		document.getElementById('n').value = split[0];  
-		document.getElementById('names').value = split[1];  
-		document.getElementById('speed').value = split[2];  
-		document.getElementById('lives').value = split[3];  
-		document.getElementById('sizex').value = split[4];  
-		document.getElementById('sizey').value = split[5];  
-		document.getElementById('pixx').value = split[6];  
-		document.getElementById('pixy').value = split[7];  
+		if (split.length == 10) {
+			document.getElementById('n').value = split[0];  
+			document.getElementById('names').value = split[1];  
+			document.getElementById('colors').value = split[2];  
+			document.getElementById('speed').value = split[3];  
+			document.getElementById('lives').value = split[4];  
+			document.getElementById('sizex').value = split[5];  
+			document.getElementById('sizey').value = split[6];  
+			document.getElementById('pixx').value = split[7];  
+			document.getElementById('pixy').value = split[8];  
+			document.getElementById('playgroundColors').value = split[9];
+		} else {
+			localStorage.conf = null;
+		}
 	}
 	
 	var playground;
@@ -165,12 +157,17 @@ function init() {
 		switch (e.which) {
 		case  13:
 			if (playground == null || (playground != null && playground.interval == null)) {
+				if (playground != null && !playground.gameOver) {
+					if (!confirm("Are you sure you want to restart?")) {
+						return;
+					}
+				}
 				confWidth = document.getElementById('conf').offsetWidth + 'px';
 				confHeight = document.getElementById('conf').offsetHeight + 'px';
 				var conf = getConf();
 				document.getElementById('scores').innerHTML = '';
 				for (var i = 0; i < conf.n; i++) {
-					conf.names[i] = conf.names[i] || ('Player ' + i);
+					conf.names[i] = conf.names[i] || ('Player ' + (i + 1));
 					document.getElementById('scores').innerHTML += '<div class="score" style="width: ' + (100 / conf.n) + '%"><b>&nbsp;&nbsp;' + 
 						conf.names[i] + '</b> lives: <b id="p' + (i + 1) + 'Lives">' + 
 						conf.lives + '</b> score:<span id="p' + (i + 1) + 'Score">0</span></div>' 
@@ -192,12 +189,13 @@ function init() {
 				
 				if (localStorage) {
 					localStorage.conf = [document.getElementById('n').value, document.getElementById('names').value, 
+					                     document.getElementById('colors').value,
 					                     document.getElementById('speed').value, document.getElementById('lives').value, 
 					                     document.getElementById('sizex').value, document.getElementById('sizey').value, 
-					                     document.getElementById('pixx').value, document.getElementById('pixy').value].join("`"); 
+					                     document.getElementById('pixx').value, document.getElementById('pixy').value,
+					                     document.getElementById('playgroundColors').value].join("`"); 
 				}
-				
-				playground.resume();
+				playground.isPaused = false;
 			}
 			break;
 		case 27:
@@ -207,13 +205,14 @@ function init() {
 					document.getElementById('conf').show();
 				} else {
 					if (!playground.gameOver) {
-						playground.resume();
+						playground.isPaused = false;
 						document.getElementById('conf').hide();
 					}
 				}
 			}
 			break;
 		}
+		
 	}
 	
 	var confHeight;
@@ -232,6 +231,7 @@ function init() {
 			speed: parseInt(document.getElementById('speed').value),
 			lives: parseInt(document.getElementById('lives').value),
 			names: document.getElementById('names').value.split(/ *, */g),
+			colors: document.getElementById('colors').value.split(/ *, */g),
 			size: {
 				x: parseInt(document.getElementById('sizex').value),
 				y: parseInt(document.getElementById('sizey').value)
@@ -239,12 +239,17 @@ function init() {
 			pixel: {
 				x: parseInt(document.getElementById('pixx').value),
 				y: parseInt(document.getElementById('pixy').value)
-			}
+			},
+			playgroundColor: document.getElementById('playgroundColors').value.split(/ *, */g)[0],
+			wallsColor: document.getElementById('playgroundColors').value.split(/ *, */g)[1],
+			foodColor: document.getElementById('playgroundColors').value.split(/ *, */g)[2],
+			foodBackground: document.getElementById('playgroundColors').value.split(/ *, */g)[3]
 		}
 	};
 
 	var Playground = function() {
 		return {
+			isPaused: false,
 			matrix: [],
 			get: function(x, y) {
 				return this.matrix[x][y].value;
@@ -364,7 +369,13 @@ function init() {
 				playgroundElement.style.width = config.size.x * config.pixel.x + 'px';
 				playgroundElement.style.height = config.size.y * config.pixel.y + 'px';
 				playgroundElement.style.lineHeight = config.pixel.y + 'px';
-				var css = '#playground td {width:' + config.pixel.x + 'px;height:' + config.pixel.y + 'px;}',
+				var css = '#playground td {width:' + config.pixel.x + 'px;height:' + config.pixel.y + 'px;}' + 
+					'#playground {background:' + (config.playgroundColor || 'white') + ';} #playground .wall {background: ' + (config.wallsColor || 'orange') + ';}' +
+					'#conf {box-shadow: 0px 0px 12px 6px ' + (config.wallsColor || 'orange') + ' !important;' +
+					'top: ' + (config.pixel.x * 2) + 'px !important; left: ' + (config.pixel.y * 2) + 'px !important;}' +
+					'#playground .food{color: ' + (config.foodColor || 'black') + '; background: ' + (config.foodBackground || '#F9F9F9') + ';}' +
+					'#playground td.p1 {background: ' + (config.colors[0] || 'red') + ';} #playground td.p2 {background: ' + (config.colors[1] || 'blue') +
+					';} #playground td.p3 {background: ' + (config.colors[0] || 'yellow') + ';}#playground td.p4 {background: ' + (config.colors[1] || 'green') + ';}';
 			    head = document.getElementsByTagName('head')[0],
 			    style = document.createElement('style');
 				style.type = 'text/css';
@@ -381,6 +392,11 @@ function init() {
 				var _this = this;
 								
 				document.onkeydown = function(e) {
+					if (_this.interval == null) {
+						if (!_this.gameOver && !_this.isPaused && e.which != 27) {
+							_this.resume();							
+						}
+					}
 					if (_this.interval != null) {
 						for (var i = 0; i < _this.worms.length; i++) {
 							var worm = _this.worms[i];
@@ -390,6 +406,9 @@ function init() {
 								if (worm.head.d != map[1]) worm.turn(map[0]);
 								e.preventDefault();
 							}
+						}
+						if (e.which > 31 && e.which < 35) {
+							e.preventDefault();
 						}
 					}
 				}		
@@ -404,10 +423,12 @@ function init() {
 				4076: ['l', 'r'], 4080: ['u', 'd'], 4222: ['r', 'l'], 4186: ['d', 'u'] 
 			},
 			resume: function() {
+				this.isPaused = false;
 				var _this = this;
 				this.interval = setInterval(function() {_this.tick()}, 1000 / _this.speed);
 			},
 			pause: function() {
+				this.isPaused = true;
 				clearInterval(this.interval);
 				this.interval = null;
 			},
