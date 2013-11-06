@@ -77,7 +77,7 @@ body {
 	-webkit-transition: height .2s;
 	-moz-transition: height .2s;
 	overflow: hidden;
-	box-shadow: 0px 0px 12px 6px orange;
+	box-shadow: 0px 0px 10px 1px orange;
 }
 
 #conf table {
@@ -371,7 +371,7 @@ function init() {
 				playgroundElement.style.lineHeight = config.pixel.y + 'px';
 				var css = '#playground td {width:' + config.pixel.x + 'px;height:' + config.pixel.y + 'px;}' + 
 					'#playground {background:' + (config.playgroundColor || 'white') + ';} #playground .wall {background: ' + (config.wallsColor || 'orange') + ';}' +
-					'#conf {box-shadow: 0px 0px 12px 6px ' + (config.wallsColor || 'orange') + ' !important;' +
+					'#conf {box-shadow: 0px 0px 10px 1px ' + (config.wallsColor || 'orange') + ' !important;' +
 					'top: ' + (config.pixel.x * 2) + 'px !important; left: ' + (config.pixel.y * 2) + 'px !important;}' +
 					'#playground .food{color: ' + (config.foodColor || 'black') + '; background: ' + (config.foodBackground || '#F9F9F9') + ';}' +
 					'#playground td.p1 {background: ' + (config.colors[0] || 'red') + ';} #playground td.p2 {background: ' + (config.colors[1] || 'blue') +
