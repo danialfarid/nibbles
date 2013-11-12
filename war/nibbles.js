@@ -242,8 +242,8 @@ function init() {
 					'#playground .food{color: ' + (config.foodColor || 'black') + '; background: ' + (config.foodBackground || '#F9F9F9') + ';}' +
 					'#playground td.p1, #score p1 {background: ' + (config.colors[0] || 'red') + 
 					';} #playground td.p2, #score p2 {background: ' + (config.colors[1] || 'blue') +
-					';} #playground td.p3, #score p3 {background: ' + (config.colors[0] || 'yellow') + 
-					';}#playground td.p4, #score p4 {background: ' + (config.colors[1] || 'green') + ';}';
+					';} #playground td.p3, #score p3 {background: ' + (config.colors[2] || 'yellow') + 
+					';}#playground td.p4, #score p4 {background: ' + (config.colors[3] || 'green') + ';}';
 			    var style = document.getElementById('style');
 				if (style.styleSheet){
 					style.styleSheet.cssText = css;
