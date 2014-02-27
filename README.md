@@ -1,4 +1,4 @@
-nibbles
+Nibbles Multiplayer Game
 =======
 
-nibbles game
+[Play here] (http://nibbles-gg.appspot.com/)
