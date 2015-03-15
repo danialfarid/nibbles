@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nibbles</title>
+    <link rel="stylesheet" type="text/css" href="nibbles.css">
+    <style id="style"></style>
+    <script src="cheetajs.js"></script>
+    <script src="nibbles.js"></script>
+    <script src='/_ah/channel/jsapi'></script>
+</head>
+<body>
+
+<div model.="nibbles">
+	<ol class="scores">
+        <li for.="worm: worms">
+            <div class="score" style.="color: {{.worm.color}}" text.=".worm.name"></div>
+            <span class="heart">&hearts;</span>&nbsp;&nbsp;<span text.=".worm.lives"></span>
+            <span class="money">&hearts;</span>&nbsp;&nbsp;<span text.=".worm.score"></span>
+        </li>
+    </ol>
+	<div id="wrapper">
+		<div id="conf">
+			<table>
+                <tr>
+                    <td colspan="2" class="welcome">Welcome to Nibbles</td>
+                </tr>
+                <tr>
+                    <td>Your name:</td>
+                    <td><label><input bind.=".worm.name" type="text" value="Player 1"></label></td>
+                </tr>
+                <tr>
+                    <td>Your color: (red, blue, yellow, green)</td>
+                    <td><label><input bind.=".worm.color" type="text" size= "30" value="red"></label></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="c-title">Join an existing Game:</td>
+                </tr>
+                <tr>
+                    <td><label><input bind.=".joinId" type="text"></label>
+                        <button onaction.=".joinGame(joinId)">Join</button></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="c-title">Or create a new Game</td>
+                </tr>
+    			<tr>
+					<td>Speed (1-100):</td>
+					<td><label><input bind.=".conf.speed" type="number" value="10" min="1" max="1000"></td>
+				</tr>
+				<tr>
+					<td>Lives (1-60):</td>
+					<td><label><input bind.=".conf.lives" type="number" value="10" min="1" max="1000"></label></td>
+				</tr>
+				<tr>
+					<td>Size (X, Y):</td>
+					<td><label><input bind.=".conf.size.x" type="number" value="80" min="1" max="1000"></label>
+                        <label><input bind.=".conf.size.y" type="number" value="50" min="1" max="1000"></label></td>
+				</tr>
+                <tr>
+                    <td>Game name:</td>
+                    <td><label><input bind.=".conf.id" type="text" value=""></label></td>
+                </tr>
+                <tr>
+                    <td colspan="2" ><button onaction.=".createGame()">Create a new game</button></td>
+                </tr>
+                <tr>
+					<td>Pixel dimension (X, Y):</td>
+					<td><label><input bind.=".ui.pixx" type="number" value="12" min="1" max="1000"></label>
+                        <label><input bind.=".ui.pixy" type="number" value="12" min="1" max="1000"></label></td>
+				</tr>
+				<tr>
+					<td>Playground colors: <div class="conf-sub">(playground, walls, food color, food background)</div></td>
+					<td><label><input bind.=".ui.playgroundColors" type="text" size= "30" value="white, orange, black, white"></label></td>
+				</tr>
+				<tr class="desc">
+					<td colspan="2">Press ENTER to Start, ESC to Pause/Resume</td>
+				</tr>
+			</table>
+		</div>
+		<table border="0" cellpadding="0" cellspacing="0">
+            <tr for.="i : nibbles.joined.size.y">
+                <td for.="j: 0 .. nibbles.joined.size.x">
+                    <div>a</div>
+                </td>
+            </tr>
+		</table>
+	</div>
+</div>
+
+</body>
+</html>
+ 

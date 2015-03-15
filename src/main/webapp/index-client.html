@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Nibbles</title>
+<link rel="stylesheet" type="text/css" href="nibbles.css">
+<style id="style"></style>
+<script src="nibbles.js"></script>
+</head>
+<body onload="init()">
+
+<div id="gameboard">
+	<div id="scores"></div>
+	<div id="wrapper">
+		<div id="conf">
+			<table>
+				<tr>
+					<td colspan="2" id="game-result">Welcome to Nibbles</td>
+				</tr>
+				<tr>
+					<td>Number of players (1-4):</td>
+					<td><input id="n" type="number" value="2" min="1" max="4"></td>
+				</tr>
+				<tr>
+					<td>Player names:</td>
+					<td><input id="names" type="text" value="Player 1, Player 2"></td>
+				</tr>
+				<tr>
+					<td>Player Colors:</td>
+					<td><input id="colors" type="text" size= "30" value="red, blue, yellow, green"></td>
+				</tr>
+				<tr>
+					<td>Speed (1-100):</td>
+					<td><input id="speed" type="number" value="10" min="1" max="1000"></td>
+				</tr>
+				<tr>
+					<td>Lives (1-60):</td>
+					<td><input id="lives" type="number" value="10" min="1" max="1000"></td>
+				</tr>
+				<tr>
+					<td>Size (X, Y):</td>
+					<td><input id="sizex" type="number" value="80" min="1" max="1000"><input id="sizey" type="number" value="50" min="1" max="1000"></td>
+				</tr>
+				<tr>
+					<td>Pixel dimension (X, Y):</td>
+					<td><input id="pixx" type="number" value="12" min="1" max="1000"><input id="pixy" type="number" value="12" min="1" max="1000"></td>
+				</tr>
+				<tr>
+					<td>Playground colors: <div class="conf-sub">(playground, walls, food color, food background)</div></td>
+					<td><input id="playgroundColors" type="text" size= "30" value="white, orange, black, white"></td>
+				</tr>
+				<tr class="desc">
+					<td colspan="2">Press ENTER to Start/Restart, ESC to Pause/Resume</td>
+				</tr>
+			</table>
+		</div>
+		<table id="playground" border="0" cellpadding="0" cellspacing="0">
+		</table>
+	</div>
+</div>
+
+</body>
+</html>
+ 
