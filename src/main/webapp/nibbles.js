@@ -1,5 +1,5 @@
 Oo.future(function () {
-	var nibbles = window.nibbles = {
+	var nibbles = M.nibbles = {
 	    worm: {},
 	    worms: [],
 	    conf: {size: {}},
